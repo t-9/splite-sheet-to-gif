@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+  <meta charset="UTF-8">
+  <title>スプライトシート→GIF変換ツール</title>
+  <!--
+    Note: If you get a script error about gif.worker.js not loading,
+    it may be blocked by your environment's Content Security Policy,
+    or by a cross-origin restriction. Make sure your environment
+    allows loading external scripts from cdn.jsdelivr.net.
+  -->
+  <script src="https://cdn.jsdelivr.net/npm/gif.js.optimized/dist/gif.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      padding: 20px;
+    }
+
+    canvas {
+      display: none;
+    }
+  </style>
+</head>
+
+<body>
+  <h2>🔥スプライトシート→GIF変換ツール🔥</h2>
+
+  <input type="file" id="upload" accept="image/*">
+  <br><br>
+  <label>行数: <input type="number" id="rows" value="4"></label>
+  <label>列数: <input type="number" id="cols" value="4"></label>
+  <br><br>
+  <button onclick="generateGIF()">GIF作成</button>
+  <br><br>
+  <a id="download" style="display:none">GIFをダウンロード</a>
+
+  <canvas id="canvas"></canvas>
+
+  <script>
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+
+    function generateGIF() {
+      const fileInput = document.getElementById('upload');
+      if (!fileInput.files[0]) {
+        alert('画像を選択して！');
+        return;
+      }
+
+      const rows = parseInt(document.getElementById('rows').value);
+      const cols = parseInt(document.getElementById('cols').value);
+
+      const reader = new FileReader();
+      reader.onload = function (event) {
+        const img = new Image();
+        img.crossOrigin = 'Anonymous';
+
+        img.onload = () => {
+          const frameWidth = Math.floor(img.width / cols);
+          const frameHeight = Math.floor(img.height / rows);
+
+          console.log('画像サイズ:', img.width, 'x', img.height);
+          console.log('フレームサイズ:', frameWidth, 'x', frameHeight);
+
+          // キャンバスのサイズを設定
+          canvas.width = frameWidth;
+          canvas.height = frameHeight;
+
+          // キャンバスのサイズが有効かチェック
+          if (canvas.width <= 0 || canvas.height <= 0) {
+            alert('画像のサイズが無効です。');
+            return;
+          }
+
+          const gif = new GIF({
+            workers: 2,
+            quality: 10,
+            width: frameWidth,
+            height: frameHeight,
+            workerScript: 'gif.worker.js'
+          });
+
+          // キャンバスのコンテキストを最適化
+          ctx.imageSmoothingEnabled = true;
+          ctx.imageSmoothingQuality = 'high';
+
+          // フレームの追加を非同期で処理
+          const addFrames = async () => {
+            try {
+              for (let y = 0; y < rows; y++) {
+                for (let x = 0; x < cols; x++) {
+                  console.log(`フレーム追加中: ${x},${y}`);
+
+                  ctx.clearRect(0, 0, frameWidth, frameHeight);
+                  ctx.drawImage(
+                    img,
+                    x * frameWidth,
+                    y * frameHeight,
+                    frameWidth,
+                    frameHeight,
+                    0,
+                    0,
+                    frameWidth,
+                    frameHeight
+                  );
+
+                  // キャンバスの内容を確認
+                  const imageData = ctx.getImageData(0, 0, frameWidth, frameHeight);
+                  if (!imageData || imageData.data.length === 0) {
+                    throw new Error('キャンバスのデータが無効です');
+                  }
+
+                  gif.addFrame(ctx, { copy: true, delay: 100 });
+                }
+              }
+              console.log('すべてのフレームを追加しました');
+              gif.render();
+            } catch (error) {
+              console.error('詳細なエラー情報:', error);
+              alert(`エラーが発生しました: ${error.message}`);
+            }
+          };
+
+          addFrames();
+
+          gif.on('finished', blob => {
+            const url = URL.createObjectURL(blob);
+            const downloadLink = document.getElementById('download');
+            downloadLink.href = url;
+            downloadLink.download = 'animated.gif';
+            downloadLink.style.display = 'inline';
+            downloadLink.textContent = 'GIFをダウンロード！';
+          });
+        };
+
+        img.src = event.target.result;
+      };
+
+      reader.readAsDataURL(fileInput.files[0]);
+    }
+  </script>
+</body>
+
+</html>
