@@ -69,10 +69,6 @@
           const frameWidth = Math.floor(img.width / cols);
           const frameHeight = Math.floor(img.height / rows);
 
-          console.log('画像サイズ:', img.width, 'x', img.height);
-          console.log('フレームサイズ:', frameWidth, 'x', frameHeight);
-          console.log('フレーム間隔:', delay, 'ms');
-
           // キャンバスのサイズを設定
           canvas.width = frameWidth;
           canvas.height = frameHeight;
@@ -100,8 +96,6 @@
             try {
               for (let y = 0; y < rows; y++) {
                 for (let x = 0; x < cols; x++) {
-                  console.log(`フレーム追加中: ${x},${y}`);
-
                   ctx.clearRect(0, 0, frameWidth, frameHeight);
                   ctx.drawImage(
                     img,
@@ -124,7 +118,6 @@
                   gif.addFrame(ctx, { copy: true, delay: delay });
                 }
               }
-              console.log('すべてのフレームを追加しました');
               gif.render();
             } catch (error) {
               console.error('詳細なエラー情報:', error);
