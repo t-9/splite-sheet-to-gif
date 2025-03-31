@@ -32,6 +32,8 @@
   <label>行数: <input type="number" id="rows" value="4"></label>
   <label>列数: <input type="number" id="cols" value="4"></label>
   <br><br>
+  <label>フレーム間隔(ms): <input type="number" id="delay" value="100" min="1"></label>
+  <br><br>
   <button onclick="generateGIF()">GIF作成</button>
   <br><br>
   <a id="download" style="display:none">GIFをダウンロード</a>
@@ -51,6 +53,12 @@
 
       const rows = parseInt(document.getElementById('rows').value);
       const cols = parseInt(document.getElementById('cols').value);
+      const delay = parseInt(document.getElementById('delay').value);
+
+      if (delay < 1) {
+        alert('フレーム間隔は1ms以上を指定してください。');
+        return;
+      }
 
       const reader = new FileReader();
       reader.onload = function (event) {
@@ -63,6 +71,7 @@
 
           console.log('画像サイズ:', img.width, 'x', img.height);
           console.log('フレームサイズ:', frameWidth, 'x', frameHeight);
+          console.log('フレーム間隔:', delay, 'ms');
 
           // キャンバスのサイズを設定
           canvas.width = frameWidth;
@@ -112,7 +121,7 @@
                     throw new Error('キャンバスのデータが無効です');
                   }
 
-                  gif.addFrame(ctx, { copy: true, delay: 100 });
+                  gif.addFrame(ctx, { copy: true, delay: delay });
                 }
               }
               console.log('すべてのフレームを追加しました');
